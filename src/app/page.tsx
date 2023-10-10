@@ -20,7 +20,8 @@ import { fetchData } from "@/utils/fetchData";
 import LoadingIndicator from "@/components/LoadingIndicator";
 import { submitData, HttpMethod } from "@/utils/submitData";
 import { Snackbar, AlertColor } from "@mui/material";
-import { CloseSharp } from "@mui/icons-material";
+import Pagination from "@mui/material/Pagination";
+import { TextField } from "@mui/material";
 
 export default function HomePage() {
   //const posts: Post[] = await getPosts(10, "", "1");
@@ -30,6 +31,7 @@ export default function HomePage() {
   const [openSnackbar, setOpenSnackbar] = React.useState<boolean>(false);
   const [alertMessage, setAlertMessage] = React.useState<string>("");
   const [severity, setSeverity] = React.useState<AlertColor>("info");
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
 
   const queryClient = useQueryClient();
   const result = useQuery(["posts"], () => fetchData(`/api/posts?page=&q=`), {
@@ -88,55 +90,88 @@ export default function HomePage() {
     setAlertMessage("");
   };
 
+  const handleSearch = () => {};
+
   if (result?.isLoading) {
     return <LoadingIndicator />;
   }
 
   return (
-    <Box sx={{ display: "flex" }}>
-      <div>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginY: "1%",
-          }}
-        >
-          <Link href={"/post"}>
-            <Button variant="contained" sx={{ backgroundColor: "#000" }}>
-              Create Post
+    <>
+      <Box sx={{ display: "flex" }}>
+        <div>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginY: "1%",
+            }}
+          >
+            <TextField
+              label="Search"
+              variant="outlined"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ marginRight: "8px", height: "8%" }}
+              size="small"
+            />
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: "#000", height: "5%", marginRight: "4px" }}
+              onClick={handleSearch}
+            >
+              Search
             </Button>
-          </Link>
-        </Box>
-        <Grid container rowSpacing={3} columnSpacing={3}>
-          {posts.map((post) => (
-            <Grid key={post.id} xs={6}>
-              <MediaCard
-                post={post}
-                heading={`${post.title}`}
-                text=""
-                handleOpenDeleteModal={() => handleOpenDeleteModal(post)}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </div>
-      <DeletePostDialog
-        post={selectedPost}
-        open={openDeleteModal}
-        handleClose={handleCloseDeleteModal}
-        handleSubmit={handleDelete}
-        loading={mutation?.isLoading}
-      />
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={closeAlert}
+            <Link href={"/post"}>
+              <Button variant="contained" sx={{ backgroundColor: "#000" }}>
+                Create Post
+              </Button>
+            </Link>
+          </Box>
+          <Grid container rowSpacing={3} columnSpacing={3}>
+            {posts.map((post) => (
+              <Grid key={post.id} xs={6}>
+                <MediaCard
+                  post={post}
+                  heading={`${post.title}`}
+                  text=""
+                  handleOpenDeleteModal={() => handleOpenDeleteModal(post)}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </div>
+        <DeletePostDialog
+          post={selectedPost}
+          open={openDeleteModal}
+          handleClose={handleCloseDeleteModal}
+          handleSubmit={handleDelete}
+          loading={mutation?.isLoading}
+        />
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={closeAlert}
+        >
+          <Alert
+            onClose={closeAlert}
+            severity={severity}
+            sx={{ width: "100%" }}
+          >
+            {`${alertMessage}`}
+          </Alert>
+        </Snackbar>
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: "2%",
+        }}
       >
-        <Alert onClose={closeAlert} severity={severity} sx={{ width: "100%" }}>
-          {`${alertMessage}`}
-        </Alert>
-      </Snackbar>
-    </Box>
+        <Pagination count={10} variant="outlined" onChange={() => {}} />
+      </Box>
+    </>
   );
 }
