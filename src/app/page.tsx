@@ -1,95 +1,142 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
 
-export default function Home() {
+import * as React from "react";
+import Box from "@mui/material/Box";
+import Grid from "@mui/material/Unstable_Grid2";
+import Drawer from "@mui/material/Drawer";
+import Typography from "@mui/material/Typography";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Button from "@mui/material/Button";
+import MediaCard from "@/components/MediaCard";
+import Link from "next/link";
+import { Post } from "@/interfaces/post";
+import { getPosts } from "@/firebase/firestore";
+import DeletePostDialog from "@/components/DeletePostModal";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchData } from "@/utils/fetchData";
+import LoadingIndicator from "@/components/LoadingIndicator";
+import { submitData, HttpMethod } from "@/utils/submitData";
+import { Snackbar, AlertColor } from "@mui/material";
+import { CloseSharp } from "@mui/icons-material";
+
+export default function HomePage() {
+  //const posts: Post[] = await getPosts(10, "", "1");
+  const [posts, setPosts] = React.useState<Post[]>([]);
+  const [openDeleteModal, setOpenDeleteModal] = React.useState<boolean>(false);
+  const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
+  const [openSnackbar, setOpenSnackbar] = React.useState<boolean>(false);
+  const [alertMessage, setAlertMessage] = React.useState<string>("");
+  const [severity, setSeverity] = React.useState<AlertColor>("info");
+
+  const queryClient = useQueryClient();
+  const result = useQuery(["posts"], () => fetchData(`/api/posts?page=&q=`), {
+    retry: false,
+    onSuccess: ({ posts, status, page }) => {
+      // Handle the successful response here
+      setPosts(posts);
+    },
+    onError: (error) => {
+      // Handle errors here
+      const e = error as Error;
+    },
+  });
+
+  const mutation = useMutation(submitData, {
+    onError: (error) => {
+      // Handle the error here
+      const message = error instanceof Error ? error.message : "Failed.";
+      setOpenSnackbar(true);
+      setSeverity("error");
+      setAlertMessage(message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setSelectedPost(null);
+      setOpenDeleteModal(false);
+      setOpenSnackbar(true);
+      setAlertMessage("Deleted Successfully");
+      setSeverity("success");
+    },
+  });
+
+  const handleOpenDeleteModal = (post: Post) => {
+    setSelectedPost(post);
+    setOpenDeleteModal(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setOpenDeleteModal(false);
+    setSelectedPost(null);
+  };
+
+  const handleDelete = (event: React.FormEvent) => {
+    event.preventDefault();
+    // Add your submission logic here
+    mutation.mutate({
+      url: `/api/posts/${selectedPost?.id}`,
+      payload_data: {},
+      http_method: HttpMethod.DELETE,
+    });
+  };
+
+  const closeAlert = () => {
+    setOpenSnackbar(false);
+    setSeverity("info");
+    setAlertMessage("");
+  };
+
+  if (result?.isLoading) {
+    return <LoadingIndicator />;
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <Box sx={{ display: "flex" }}>
+      <div>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginY: "1%",
+          }}
+        >
+          <Link href={"/post"}>
+            <Button variant="contained" sx={{ backgroundColor: "#000" }}>
+              Create Post
+            </Button>
+          </Link>
+        </Box>
+        <Grid container rowSpacing={3} columnSpacing={3}>
+          {posts.map((post) => (
+            <Grid key={post.id} xs={6}>
+              <MediaCard
+                post={post}
+                heading={`${post.title}`}
+                text=""
+                handleOpenDeleteModal={() => handleOpenDeleteModal(post)}
+              />
+            </Grid>
+          ))}
+        </Grid>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+      <DeletePostDialog
+        post={selectedPost}
+        open={openDeleteModal}
+        handleClose={handleCloseDeleteModal}
+        handleSubmit={handleDelete}
+        loading={mutation?.isLoading}
+      />
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={closeAlert}
+      >
+        <Alert onClose={closeAlert} severity={severity} sx={{ width: "100%" }}>
+          {`${alertMessage}`}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
 }
