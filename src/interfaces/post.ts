@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface Post {
-    id?: number;
+    id?: number | string;
     title: string;
     content: string;
     createdAt?: Date;

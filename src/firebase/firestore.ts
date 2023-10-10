@@ -75,23 +75,36 @@ export const createPost = async (title: string, content: string) => {
     page: string
   ): Promise<Post[]> => {
     try {
+      
+
       let queryRef:CollectionReference<DocumentData, DocumentData> = collection(db, "posts");
       let q: Query<DocumentData, DocumentData>;
-
-      if (title){
-        console.log("a")
-        q = query(queryRef, orderBy("createdAt", "desc"), limit(pageSize));
-      }else {
-        console.log("b")
-        q = query(queryRef, orderBy("createdAt", "desc"), limit(pageSize));
-      }
+      let posts:Post[] = [];
+      const pageNumber = Number.parseInt(page);
+      let pageCount:number;
       
+      q = query(queryRef, orderBy("createdAt", "desc"));
       const querySnapshot = await getDocs(q);
-  
-      const posts = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+
+      posts = querySnapshot.docs.map((doc) => {
+        const postData = doc.data() as Post; 
+        return {
+          id: doc.id,
+          ...postData,
+        };
+      });
+      pageCount = Math.round(posts.length/pageSize);
+
+      if (title) {
+        posts = posts.filter((post)=>{ post.title.includes(title); })
+        pageCount = Math.round(posts.length/pageSize);
+      }
+
+      if (pageNumber==1){
+        posts = posts.slice(pageSize)
+      }else{
+        posts = posts.slice(((pageNumber-1)*pageSize), (pageNumber*pageSize));
+      }
 
       return posts;
     } catch (error) {
