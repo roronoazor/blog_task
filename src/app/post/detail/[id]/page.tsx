@@ -71,7 +71,7 @@ export default async function PostDetail({
           <Box
             component="div"
             sx={{ margin: "20px 0" }}
-            dangerouslySetInnerHTML={{ __html: post?.content }}
+            dangerouslySetInnerHTML={{ __html: post ? post.content : "" }}
           />
         </Paper>
       </Box>
