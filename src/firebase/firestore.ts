@@ -73,7 +73,7 @@ export const createPost = async (title: string, content: string) => {
     pageSize: number,
     title: string,
     page: string
-  ): Promise<Post[]> => {
+  ) => {
     try {
       
 
@@ -93,20 +93,22 @@ export const createPost = async (title: string, content: string) => {
           ...postData,
         };
       });
-      pageCount = Math.round(posts.length/pageSize);
+      pageCount = Math.ceil(posts.length/pageSize);
 
       if (title) {
-        posts = posts.filter((post)=>{ post.title.includes(title); })
-        pageCount = Math.round(posts.length/pageSize);
+        posts = posts.filter((post) => post.title.toLocaleLowerCase().includes(title.toLowerCase()));
+        pageCount = Math.ceil(posts.length/pageSize);
       }
 
       if (pageNumber==1){
-        posts = posts.slice(pageSize)
+        posts = posts.slice(0, pageSize)
+      
       }else{
         posts = posts.slice(((pageNumber-1)*pageSize), (pageNumber*pageSize));
+        
       }
 
-      return posts;
+      return { posts, page: pageNumber, totalPages: pageCount };
     } catch (error) {
       console.error("Error getting posts:", error);
       throw error;

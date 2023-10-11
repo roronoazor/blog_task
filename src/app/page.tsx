@@ -32,19 +32,27 @@ export default function HomePage() {
   const [alertMessage, setAlertMessage] = React.useState<string>("");
   const [severity, setSeverity] = React.useState<AlertColor>("info");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [totalPages, setTotalPages] = React.useState<number>(1);
+  const [page, setPage] = React.useState<number>(1);
+  const [searchTerm, setSearchTerm] = React.useState<string>("");
 
   const queryClient = useQueryClient();
-  const result = useQuery(["posts"], () => fetchData(`/api/posts?page=&q=`), {
-    retry: false,
-    onSuccess: ({ posts, status, page }) => {
-      // Handle the successful response here
-      setPosts(posts);
-    },
-    onError: (error) => {
-      // Handle errors here
-      const e = error as Error;
-    },
-  });
+  const result = useQuery(
+    ["posts", page, searchTerm],
+    () => fetchData(`/api/posts?page=${page}&title=${searchTerm}`),
+    {
+      retry: false,
+      onSuccess: ({ posts, status, page, totalPages }) => {
+        // Handle the successful response here
+        setPosts(posts);
+        setTotalPages(totalPages);
+      },
+      onError: (error) => {
+        // Handle errors here
+        const e = error as Error;
+      },
+    }
+  );
 
   const mutation = useMutation(submitData, {
     onError: (error) => {
@@ -84,13 +92,19 @@ export default function HomePage() {
     });
   };
 
+  const onPageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
+
   const closeAlert = () => {
     setOpenSnackbar(false);
     setSeverity("info");
     setAlertMessage("");
   };
 
-  const handleSearch = () => {};
+  const handleSearch = () => {
+    setSearchTerm(searchQuery);
+  };
 
   if (result?.isLoading) {
     return <LoadingIndicator />;
@@ -130,7 +144,7 @@ export default function HomePage() {
           </Box>
           <Grid container rowSpacing={3} columnSpacing={3}>
             {posts.map((post) => (
-              <Grid key={post.id} xs={6}>
+              <Grid key={post.id} xs={12} md={6}>
                 <MediaCard
                   post={post}
                   heading={`${post.title}`}
@@ -170,7 +184,12 @@ export default function HomePage() {
           margin: "2%",
         }}
       >
-        <Pagination count={10} variant="outlined" onChange={() => {}} />
+        <Pagination
+          count={totalPages}
+          variant="outlined"
+          onChange={onPageChange}
+          color="primary"
+        />
       </Box>
     </>
   );

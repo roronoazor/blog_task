@@ -19,14 +19,15 @@ export async function GET(request: NextRequest) {
   try {
     
     const page = request.nextUrl.searchParams.get("page") || "1";
-    const title = request.nextUrl.searchParams.get("page") || "";
+    const title = request.nextUrl.searchParams.get("title") || "";
     // Make a GET request to fetch data with pagination
-    const posts = await getPosts(10, title, page);
+    const { posts, totalPages } = await getPosts(10, title, page);
     
     return NextResponse.json({
       posts,
       status: "success", 
-      page
+      page,
+      totalPages
     }, { status: 200 });
   } catch (error) {
     return NextResponse.json(error, { status: 500 });
