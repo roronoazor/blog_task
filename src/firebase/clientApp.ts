@@ -1,4 +1,4 @@
-import firebase from "firebase/app";
+
 import "firebase/auth";
 import "firebase/firestore";
 import { initializeApp, getApps } from "firebase/app";
@@ -19,5 +19,3 @@ const clientCredentials = {
 export const firebaseApp = getApps().length === 0 ? initializeApp(clientCredentials) : getApps()[0];
 export const auth = getAuth(firebaseApp);
 export const db = getFirestore(firebaseApp);
-
-export default firebase;
